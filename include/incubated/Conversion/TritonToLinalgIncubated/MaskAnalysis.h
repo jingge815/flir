@@ -28,6 +28,7 @@
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "triton/Dialect/Triton/IR/Dialect.h"
 
+#include <optional>
 #include <utility>
 
 namespace mlir {
@@ -139,6 +140,8 @@ private:
                                 const Location &loc, OpBuilder &builder);
 };
 
+std::optional<Incubated::MaskState> runMaskAnalysis(Operation *op,
+                                                    OpBuilder &builder);
 } // namespace Incubated
 
 } // namespace triton

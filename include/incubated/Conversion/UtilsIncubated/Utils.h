@@ -31,6 +31,7 @@
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "triton/Dialect/Triton/IR/Dialect.h"
 #include "llvm/ADT/ArrayRef.h"
 
 #include <functional>
@@ -46,7 +47,8 @@ const std::string discreteAttrName = "DiscreteMemAccess";
 
 bool isaPermutedMemRefType(MemRefType);
 
-std::optional<int64_t> getLastStrideOfReinterpretCastOp(memref::ReinterpretCastOp op);
+std::optional<int64_t>
+getLastStrideOfReinterpretCastOp(memref::ReinterpretCastOp op);
 
 Value getTransposedValue(Value source, const Location loc,
                          ConversionPatternRewriter &rewriter,
@@ -62,10 +64,9 @@ memref::SubViewOp makeSubViewOp(Value src,
                                 const Location &loc,
                                 ConversionPatternRewriter &rewriter);
 
-tensor::ExtractSliceOp makeExtractSliceOp(Value src,
-                                          const llvm::SmallVector<OpFoldResult> &sizes,
-                                          const Location &loc,
-                                          ConversionPatternRewriter &rewriter);
+tensor::ExtractSliceOp
+makeExtractSliceOp(Value src, const llvm::SmallVector<OpFoldResult> &sizes,
+                   const Location &loc, ConversionPatternRewriter &rewriter);
 
 std::optional<Operation *> getFullShapeOp(Value val,
                                           ConversionPatternRewriter &rewriter);
@@ -212,9 +213,21 @@ OpFoldResult minOpFoldResult(const OpFoldResult &lhs, const OpFoldResult &rhs,
 OpFoldResult maxOpFoldResult(const OpFoldResult &lhs, const OpFoldResult &rhs,
                              const Location &loc, OpBuilder &b);
 
-LogicalResult
-addReduceWithIndexAttrIfNeeded(ConversionPatternRewriter &rewriter,
-                               linalg::ReduceOp reduceOp);
+enum class ReduceWithIndexType { MAX, MIN };
+enum class TieBreakType { LEFT, RIGHT };
+
+struct ReduceWithIndexParams {
+  ReduceWithIndexType withIndexType;
+  TieBreakType tieBreakType;
+  bool isUnsignedSrc;
+};
+
+std::optional<ReduceWithIndexParams>
+getReduceWithIndexParams(triton::ReduceOp reduceOp);
+
+void addReduceWithIndexAttr(ReduceWithIndexParams params,
+                            ConversionPatternRewriter &rewriter,
+                            linalg::ReduceOp reduceOp);
 
 OpFoldResult getOpFoldResultOfLayoutInfo(Value value, OpBuilder &builder);
 
@@ -225,6 +238,15 @@ FailureOr<TypedAttr> specializeTypelessValueToAttr(TypelessValue, Type,
 
 FailureOr<Value> specializeTypelessValueToConstant(TypelessValue, Type,
                                                    Location, OpBuilder &);
+
+std::optional<int64_t> getIntAttr(const OpFoldResult ofr);
+
+Value materializeValue(OpBuilder &builder, Location loc, OpFoldResult ofr);
+
+bool isZero(const OpFoldResult ofr);
+
+Value convertToIndexIfNeeded(Value intValue, const Location &loc, OpBuilder &b);
+
 } // namespace mlir
 
 #endif // TRITONNPU_UTILS_UTILS_H

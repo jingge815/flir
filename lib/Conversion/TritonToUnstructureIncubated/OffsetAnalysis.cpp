@@ -351,11 +351,13 @@ void parseTritonOp(Operation *tritonOp, const Location &loc,
     parseExpandDims(expandDimsOp, loc, rewriter, offsetMap);
   } else if (auto clampFOp = dyn_cast<triton::ClampFOp>(tritonOp)) {
     parseClampF(clampFOp, loc, rewriter, offsetMap);
-  } else if (auto makeTensorDescOp =
-                 dyn_cast<triton::MakeTensorDescOp>(tritonOp)) {
-    parseMakeTensorDesc(makeTensorDescOp, loc, rewriter, offsetMap);
-  } else if (auto makeTensorPtrOp =
-                 dyn_cast<triton::MakeTensorPtrOp>(tritonOp)) {
+  }
+  // FIXME:Z|wait triton version upgrade to 3.4
+  // else if (auto makeTensorDescOp =
+  //                dyn_cast<triton::MakeTensorDescOp>(tritonOp)) {
+  //   parseMakeTensorDesc(makeTensorDescOp, loc, rewriter, offsetMap);
+  // }
+  else if (auto makeTensorPtrOp = dyn_cast<triton::MakeTensorPtrOp>(tritonOp)) {
     parseMakeTensorPtr(makeTensorPtrOp, loc, rewriter, offsetMap);
   } else if (auto reduceOp = dyn_cast<triton::ReduceOp>(tritonOp)) {
     parseReduce(reduceOp, loc, rewriter, offsetMap);
@@ -798,17 +800,18 @@ void parseSIToFP(arith::SIToFPOp op, const Location &loc,
     offsetMap[dst].setUnstructured(dstType.getRank());
 }
 
-void parseMakeTensorDesc(triton::MakeTensorDescOp op, const Location &loc,
-                         RewriterBase &rewriter,
-                         llvm::DenseMap<Value, PtrOffsetInfo> &offsetMap) {
-  // Set MakeTensorDesc offset map
-  auto dst = op.getResult();
-  offsetMap[dst] = PtrOffsetInfo();
-  auto dstType = dyn_cast<ShapedType>(dst.getType());
-  if (!dstType)
-    return;
-  offsetMap[dst].setStructured(dstType.getRank());
-}
+// FIXME:Z|wait triton version upgrade to 3.4
+// void parseMakeTensorDesc(triton::MakeTensorDescOp op, const Location &loc,
+//                          RewriterBase &rewriter,
+//                          llvm::DenseMap<Value, PtrOffsetInfo> &offsetMap) {
+//   // Set MakeTensorDesc offset map
+//   auto dst = op.getResult();
+//   offsetMap[dst] = PtrOffsetInfo();
+//   auto dstType = dyn_cast<ShapedType>(dst.getType());
+//   if (!dstType)
+//     return;
+//   offsetMap[dst].setStructured(dstType.getRank());
+// }
 
 void parseMakeTensorPtr(triton::MakeTensorPtrOp op, const Location &loc,
                         RewriterBase &rewriter,

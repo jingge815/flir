@@ -211,9 +211,10 @@ void parseSIToFP(arith::SIToFPOp op, const Location &loc,
                  RewriterBase &rewriter,
                  llvm::DenseMap<Value, PtrOffsetInfo> &offsetMap);
 
-void parseMakeTensorDesc(triton::MakeTensorDescOp op, const Location &loc,
-                         RewriterBase &rewriter,
-                         llvm::DenseMap<Value, PtrOffsetInfo> &offsetMap);
+// FIXME:Z|wait triton version upgrade to 3.4
+// void parseMakeTensorDesc(triton::MakeTensorDescOp op, const Location &loc,
+//                          RewriterBase &rewriter,
+//                          llvm::DenseMap<Value, PtrOffsetInfo> &offsetMap);
 
 void parseMakeTensorPtr(triton::MakeTensorPtrOp op, const Location &loc,
                         RewriterBase &rewriter,

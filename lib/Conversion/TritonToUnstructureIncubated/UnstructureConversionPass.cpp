@@ -21,6 +21,7 @@
  */
 
 #include "incubated/Conversion/TritonToUnstructureIncubated/UnstructureConversionPass.h"
+#include "incubated/Conversion/TritonToLinalgIncubated/MaskAnalysis.h"
 #include "incubated/Conversion/UtilsIncubated/Utils.h"
 #include "triton/Dialect/Triton/IR/Dialect.h"
 
@@ -34,8 +35,6 @@
 #include "mlir/Transforms/Passes.h"
 
 #include "llvm/ADT/STLExtras.h"
-
-#include <optional>
 
 #define DEBUG_TYPE "triton-unstructure-converter"
 
@@ -275,11 +274,15 @@ LogicalResult UnstructuredMemAccessConverter<MemAccOpTy>::matchAndRewrite(
     os << ptrOffsetInfo.isScalarLike() << "\n";
   });
 
-  if constexpr (std::is_same_v<MemAccOpTy, triton::LoadOp>)
+  if constexpr (std::is_same_v<MemAccOpTy, triton::LoadOp>) {
     if (ptrOffsetInfo.isScalarLike()) {
       splatAndLoadScenario(op, ptrOffsetInfo.getRank(), rewriter);
       return success();
     }
+  }
+
+  std::optional<Incubated::MaskState> mstate =
+      Incubated::runMaskAnalysis(op, static_cast<OpBuilder &>(rewriter));
 
   if (op->hasAttr(ConverterUtils::discreteMaskAttrName)) {
     if constexpr (std::is_same_v<MemAccOpTy, triton::StoreOp>) {
@@ -359,7 +362,7 @@ LogicalResult UnstructuredMemAccessConverter<MemAccOpTy>::matchAndRewrite(
       Value mask = op.getMask();
       Value other = op.getOther();
       auto resultType = op.getType();
-      auto indirect = rewriter.create<triton::IndirectLoadOp>(
+      auto indirect = rewriter.create<triton::ascend::IndirectLoadOp>(
           loc, resultType, srcPtr, ptrOffset, mask, other);
       rewriter.replaceOp(op, indirect.getResult());
       LLVM_DEBUG({
@@ -373,7 +376,7 @@ LogicalResult UnstructuredMemAccessConverter<MemAccOpTy>::matchAndRewrite(
              "src must be ptr type");
       Value value = op.getValue();
       Value mask = op.getMask();
-      auto indirect = rewriter.create<triton::IndirectStoreOp>(
+      auto indirect = rewriter.create<triton::ascend::IndirectStoreOp>(
           loc, srcPtr, ptrOffset, value, mask);
       rewriter.eraseOp(op);
       LLVM_DEBUG({
@@ -422,6 +425,9 @@ LogicalResult UnstructuredMemAccessConverter<MemAccOpTy>::matchAndRewrite(
               loc, rewriter.getIndexType(), tptShape);
         }
         sizeVal = rewriter.create<arith::MinSIOp>(loc, sizeVal, tptShape);
+      } else if (mstate) {
+        sizeVal =
+            getValueOrCreateConstantIndexOp(rewriter, loc, mstate->dims[i]);
       }
       if (isLoadLike) {
         forOp = rewriter.create<scf::ForOp>(loc, zeroIdx, sizeVal, oneIdx,
@@ -762,6 +768,7 @@ void replacePtrLoopArguments(Operation *rootOp,
                     yieldOp.getLoc(),
                     constructOperands(yieldOp.getOperands(), tempVar, mapping));
               });
+          newOp->setAttrs(op->getAttrs());
         } else if (auto whileOp = dyn_cast<scf::WhileOp>(op.getOperation())) {
           newOp = rewriter.create<scf::WhileOp>(
               whileOp.getLoc(), constructTypes(whileOp->getResultTypes()),

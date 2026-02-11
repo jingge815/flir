@@ -27,7 +27,7 @@
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
-#include "triton/Dialect/Triton/IR/Dialect.h"
+#include "npu/Dialect/TritonAscend/IR/TritonAscendDialect.h"
 
 namespace mlir {
 namespace triton {
@@ -47,10 +47,10 @@ struct TritonToAnnotationPass
 } // namespace
 
 struct TritonAnnotationConversionPattern
-    : OpRewritePattern<triton::AnnotationOp> {
-  using OpRewritePattern<triton::AnnotationOp>::OpRewritePattern;
+    : OpRewritePattern<mlir::triton::ascend::AnnotationOp> {
+  using OpRewritePattern<mlir::triton::ascend::AnnotationOp>::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(triton::AnnotationOp op,
+  LogicalResult matchAndRewrite(mlir::triton::ascend::AnnotationOp op,
                                 PatternRewriter &rewriter) const final {
     auto markOp = rewriter.create<annotation::MarkOp>(op.getLoc(), op.getSrc());
     // Forward all annotations.

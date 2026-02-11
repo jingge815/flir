@@ -3,9 +3,9 @@
 
 include "mlir/Pass/PassBase.td"
 
-def TritonToLinalgIncubated : Pass<"triton-to-linalg-Incubated", "mlir::ModuleOp"> {
+def TritonToLinalgIncubated : Pass<"triton-to-linalg-incubated", "mlir::ModuleOp"> {
     let summary = "Convert Triton to Linalg dialect (Incubated)";
-    let constructor = "triton::createTritonToLinalgIncubatedPass(globalKernel, namedOps)";
+    let constructor = "createTritonToLinalgIncubatedPass()";
     let options = [
         Option<"globalKernel", "global-kernel", 
             "bool", /*default*/"true",
@@ -17,7 +17,7 @@ def TritonToLinalgIncubated : Pass<"triton-to-linalg-Incubated", "mlir::ModuleOp
             "bool", /*default*/"false",
             "enable nd2nz on vector">,
         Option<"enableSelectAnalysis", "enable-select-analysis",
-            "bool", /*default*/"false",
+            "bool", /*default*/"true",
             "enable select analysis">,
         Option<"compileOn91095", "compile-on-910-95", 
             "bool", /*default*/"false",
