@@ -1,5 +1,9 @@
+if(FLAGTREE_TLE_STRUCT)
+  set(TleToLinalgLib TleToLinalg)
+endif()
+
 add_triton_library(TritonToLinalgIncubated
-        TritonToLinalgIncubatedPass.cpp
+        TritonToLinalgPass.cpp
         LoadStoreConverter.cpp
         FunctionConverter.cpp
         ArgMinMaxConverter.cpp
@@ -8,7 +12,9 @@ add_triton_library(TritonToLinalgIncubated
         BlockPtrAnalysis.cpp
         MaskAnalysis.cpp
         UseAnalysis.cpp
+        ImplicitPermute.cpp
         DescriptorConverter.cpp
+        MarkTensorKindPass.cpp
 
   DEPENDS
   TritonToLinalgIncubatedConversionPassIncGen
@@ -28,5 +34,5 @@ add_triton_library(TritonToLinalgIncubated
   MLIRTritonNPUUtils
   MLIRSCFTransforms
   MLIRLinalgTransforms
-  TleToLinalg
+  ${TleToLinalgLib}
 )

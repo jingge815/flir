@@ -27,8 +27,8 @@
 #include "mlir/Pass/Pass.h"
 #include "triton/Dialect/Triton/IR/Dialect.h"
 
+#include "ascend/include/Dialect/TritonAscend/IR/TritonAscendDialect.h"
 #include "mlir/IR/PatternMatch.h"
-#include "npu/Dialect/TritonAscend/IR/TritonAscendDialect.h"
 
 #define GEN_PASS_DECL_TRITONTOUNSTRUCTUREINCUBATED
 #include "incubated/Conversion/TritonToUnstructureIncubated/Passes.h.inc"
@@ -143,8 +143,13 @@ private:
   llvm::DenseMap<Value, PtrOffsetInfo> offsetMap;
   llvm::DenseMap<Value, PtrOffsetInfo> offsetMapForLoopArgs;
   llvm::SmallDenseMap<Value, bool> fromTensorArg;
+
+  LogicalResult processIfYieldAddHoistOperations(ModuleOp moduleOp);
 };
 
 } // namespace
+
+void replacePtrArguments(triton::FuncOp funcOp,
+                         llvm::DenseMap<Value, PtrOffsetInfo> &offsetMap);
 
 #endif // TRITON_ADAPTER_UNSTRUCTURECONVERSION_H
